@@ -1,0 +1,44 @@
+{
+  "API": [
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/tracesCount/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/alertsBalance/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/agentDistribution/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/threatTrends/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/blockedEvents/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/tracesCount/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/alertsBalance/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/agentDistribution/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/threatTrends/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/blockedEvents/"
+    }
+  ]
+}

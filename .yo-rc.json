@@ -1,0 +1,9 @@
+{
+  "generator-node": {
+    "promptValues": {
+      "authorName": "Yitzhak Dashevsky",
+      "authorEmail": "yitzhak@razorgrip.com",
+      "authorUrl": ""
+    }
+  }
+}
