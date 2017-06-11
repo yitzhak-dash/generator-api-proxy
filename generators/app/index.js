@@ -107,13 +107,22 @@ module.exports = class extends Generator {
       item.requestParamsStr = this.requestParamsToString(item.requestParams);
     });
 
+    let routeMap = [];
+    routeList.API.forEach(item => {
+      let destination = item.path;
+      let source = item.path.replace(/\/api|\/v[0-9]/g, '');
+      routeMap.push({destination, source});
+    });
+    routeMap = _.uniqBy(routeMap, 'target');
+
     this.fs.copyTpl(
       this.templatePath('api-proxy.txt'),
       this.destinationPath(`${this.createFileName(this.props.className)}.ts`),
       {
         className: this.createClassName(this.props.className),
         routeList: routeList.API,
-        url: this.props.url
+        url: this.props.url,
+        routeMap
       }
     );
   };
@@ -139,7 +148,7 @@ module.exports = class extends Generator {
 
   requestParamsToString(arr) {
     if (_.isNil(arr)) {
-      return ;
+      return;
     }
     return arr.reduce((acc, val) => acc + ', ' + val.paramName, '').slice(2);
   }

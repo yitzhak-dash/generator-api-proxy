@@ -1,25 +1,54 @@
+/*
+ generated file
+ */
 import * as request from 'superagent';
+import * as _ from 'lodash';
 
 export class <%- className %> {
+    private readonly endpoint = '<%= url %>';
 
-      private readonly endpoint = '<%= url %>';
+    private getURL = (api: string): string => this.endpoint + api;
+    pathMap: { [path: string]: string; } = {};
 
-      private getURL = (api: string): string => this.endpoint + api;
-<% routeList.forEach(function(item){ %>
-      // <%= item.method %>:  <%= item.path %>
-      <%= item.functionName %>(<% if(item.isNeedSendData) {%>data:any<% } %><%= item.requestParamsStr %>): Promise<any> {
+    constructor() {
+        this.initPathMap();
+    }
+
+    private convertPathToPropName(path: string) {
+        if (_.isEmpty(path)) {
+            throw new Error(`path arg. can't be empty`);
+        }
+        return (path).replace(/[\/:]/g, '_');
+    }
+
+    private initPathMap() {<% routeMap.forEach(function(item){ %>
+        this.addPathToMap('<%= item.destination %>', '<%= item.source %>');<% }); %>
+    }
+
+    private addPathToMap(sourcePath: string, targetPath: string) {
+        const key = this.convertPathToPropName(sourcePath);
+        if (!this.pathMap.hasOwnProperty(key)) {
+            this.pathMap[key] = targetPath;
+        }
+    }
+
+    private getTargetFullPath(sourcePath: string) {
+        const key = this.convertPathToPropName(sourcePath);
+        if (!this.pathMap.hasOwnProperty(key)) {
+            throw new Error(`${sourcePath} doesn't exist.`);
+        }
+        return this.getURL(this.pathMap[key]);
+    }
+
+    get(sourcePath: string) {
         return request
-              .<%= item.method.toLowerCase() %>(this.getURL('<%= item.path %>'))
-              .set('Accept', 'application/json')<% if(item.isNeedSendData) {%>.send(data)<% } %>
-              <% requestParams.forEach(function(param){ %>
-              .query({ XXX: '<%= paramName %>' }
-              <% }); %>
-              .on('error', err => {
-                  console.error('error', err);
-              })
-              .then(res => {
-                  return res.body;
-              });
-      }
-    <% }); %>
+            .get(this.getTargetFullPath(sourcePath))
+            .set('Accept', 'application/json')
+            .on('error', err => {
+                console.error('error', err);
+            })
+            .then(res => {
+                return res.body;
+            });
+    }
 }
