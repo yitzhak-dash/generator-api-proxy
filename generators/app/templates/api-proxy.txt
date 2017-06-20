@@ -3,50 +3,87 @@
  */
 import * as request from 'superagent';
 import * as _ from 'lodash';
+import * as pathToRegexp from 'path-to-regexp';
+import { Request } from 'express';
+//
+import { RouteInfo } from './route-info';
 
 export class <%- className %> {
     private readonly endpoint = '<%= url %>';
 
-    private getURL = (api: string): string => this.endpoint + api;
-    pathMap: { [path: string]: string; } = {};
+    private getURL = (api: string): string => {
+        // validate one '/' between path and endpoint
+        if ((api[0] == '/') && (this.endpoint[this.endpoint.length-1] == '/')) {
+            api = api.slice(1);
+        }
+        if ((api[0] !== '/') && (this.endpoint[this.endpoint.length-1] !== '/')) {
+            api += '/';
+        }
+        return this.endpoint + api
+        };
+    pathMap: { [path: string]: RouteInfo; } = {};
 
     constructor() {
         this.initPathMap();
     }
 
-    private convertPathToPropName(path: string) {
-        if (_.isEmpty(path)) {
-            throw new Error(`path arg. can't be empty`);
-        }
-        return (path).replace(/[\/:]/g, '_');
+    private initPathMap() {
+        <% for (item in routeMap) { %>
+         this.addPathToMap('<%= routeMap[item].gateWayPath %>', {gateWayPath: '<%= routeMap[item].gateWayPath %>',
+                            microServicePath: '<%= routeMap[item].microServicePath %>',
+                            methods: [ <% routeMap[item].methods.forEach(function(method) { %>'<%= method %>',<% }); %> ] }); 
+         <% }; %>
     }
 
-    private initPathMap() {<% routeMap.forEach(function(item){ %>
-        this.addPathToMap('<%= item.destination %>', '<%= item.source %>');<% }); %>
-    }
-
-    private addPathToMap(sourcePath: string, targetPath: string) {
-        const key = this.convertPathToPropName(sourcePath);
-        if (!this.pathMap.hasOwnProperty(key)) {
-            this.pathMap[key] = targetPath;
+    private addPathToMap(gateWayPath: string, routeInfo: RouteInfo) {
+        if (!this.pathMap.hasOwnProperty(gateWayPath)) {
+            this.pathMap[gateWayPath] = routeInfo;
         }
     }
 
-    private getTargetFullPath(sourcePath: string) {
-        const key = this.convertPathToPropName(sourcePath);
-        if (!this.pathMap.hasOwnProperty(key)) {
-            throw new Error(`${sourcePath} doesn't exist.`);
+    private getTargetFullPath(gateWayPath: string, req: Request) {
+        if (!this.pathMap.hasOwnProperty(gateWayPath)) {
+            throw new Error(`${gateWayPath} doesn't exist.`);
         }
-        return this.getURL(this.pathMap[key]);
+        const compilePath = pathToRegexp.compile(this.pathMap[gateWayPath].microServicePath);
+        const finalPath = compilePath(req.params);
+        return this.getURL(finalPath
     }
 
-    get(sourcePath: string) {
+    get(gateWayPath: string, req: Request) {
         return request
-            .get(this.getTargetFullPath(sourcePath))
+            .get(this.getTargetFullPath(gateWayPath, req))
             .set('Accept', 'application/json')
-            .on('error', err => {
-                console.error('error', err);
-            })
+            .then(res => {
+                return res.body;
+            });
+    }
+
+    post(gateWayPath: string, req: Request): Promise<any> {
+        return request
+            .post(this.getTargetFullPath(gateWayPath, req))
+            .set('Accept', 'application/json')
+            .send(req.body)
+            .then(res => {
+                return res.body;
+            });
+    }
+
+    put(gateWayPath: string, req: Request): Promise<any> {
+        return request
+            .put(this.getTargetFullPath(gateWayPath, req))
+            .set('Accept', 'application/json')
+            .send(req.body)
+            .then(res => {
+                return res.body;
+            });
+    }
+
+    delete(gateWayPath: string, req: Request): Promise<any> {
+        return request
+            .delete(this.getTargetFullPath(gateWayPath, req))
+            .set('Accept', 'application/json')
+            .send(req.body)
             .then(res => {
                 return res.body;
             });

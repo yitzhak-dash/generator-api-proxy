@@ -1,0 +1,9 @@
+/*
+ generated file
+*/
+
+export interface RouteInfo {
+    gateWayPath: string;
+    microServicePath: string;
+    methods: string[];
+}
