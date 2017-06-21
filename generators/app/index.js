@@ -102,7 +102,7 @@ module.exports = class extends Generator {
     }
     routeList.API.forEach(item => {
       item.functionName = this.createGeneratedFunctionName(item.method, item.path);
-      item.isNeedSendData = this.isNeedSendData(item.method);
+      item.needSendData = this.needSendData(item.method);
       item.requestParams = this.retrieveRequestParams(item.method, item.path);
       item.requestParamsStr = this.requestParamsToString(item.requestParams);
     });
@@ -116,10 +116,13 @@ module.exports = class extends Generator {
         if (!routeMap[gateWayPath].methods.includes(method)) {
           routeMap[gateWayPath].methods.push(method);
         }
-      } else {
-         if (gateWayPath !== '/') routeMap[gateWayPath] = { gateWayPath: gateWayPath, microServicePath: microServicePath, methods: [method] };
+      } else if (gateWayPath !== '/') {
+        routeMap[gateWayPath] = {
+          gateWayPath: gateWayPath,
+          microServicePath: microServicePath,
+          methods: [method]
+        };
       }
-        
     });
 
     this.fs.copyTpl(
@@ -137,9 +140,7 @@ module.exports = class extends Generator {
       this.templatePath('route-info.txt'),
       this.destinationPath(`route-info.ts`)
     );
-  };
-
-
+  }
 
   retrieveRequestParams(method, path) {
     if (!_.includes(['GET', 'DELETE'], method)) {
@@ -154,7 +155,7 @@ module.exports = class extends Generator {
         if (i > 0) {
           paramName = `${urlSegments[i - 1]}${_.upperFirst(paramName.slice(1))}`;
         }
-        result.push({ paramName });
+        result.push({paramName});
       }
     }
     return result;
@@ -167,10 +168,9 @@ module.exports = class extends Generator {
     return arr.reduce((acc, val) => acc + ', ' + val.paramName, '').slice(2);
   }
 
-  isNeedSendData(method) {
+  needSendData(method) {
     return _.includes(['POST', 'PUT'], method);
   }
-
 
   createFileName(name) {
     return _.kebabCase(name);
