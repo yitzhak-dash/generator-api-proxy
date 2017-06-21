@@ -102,18 +102,28 @@ module.exports = class extends Generator {
     }
     routeList.API.forEach(item => {
       item.functionName = this.createGeneratedFunctionName(item.method, item.path);
-      item.isNeedSendData = this.isNeedSendData(item.method);
+      item.needSendData = this.needSendData(item.method);
       item.requestParams = this.retrieveRequestParams(item.method, item.path);
       item.requestParamsStr = this.requestParamsToString(item.requestParams);
     });
 
-    let routeMap = [];
+    let routeMap = {};
     routeList.API.forEach(item => {
-      let destination = item.path;
-      let source = item.path.replace(/\/api|\/v[0-9]/g, '');
-      routeMap.push({destination, source});
+      let microServicePath = item.path;
+      let gateWayPath = item.path.replace(/\/api|\/v[0-9]/g, '');
+      let method = item.method;
+      if (routeMap[gateWayPath]) {
+        if (!routeMap[gateWayPath].methods.includes(method)) {
+          routeMap[gateWayPath].methods.push(method);
+        }
+      } else if (gateWayPath !== '/') {
+        routeMap[gateWayPath] = {
+          gateWayPath: gateWayPath,
+          microServicePath: microServicePath,
+          methods: [method]
+        };
+      }
     });
-    routeMap = _.uniqBy(routeMap, 'target');
 
     this.fs.copyTpl(
       this.templatePath('api-proxy.txt'),
@@ -125,7 +135,12 @@ module.exports = class extends Generator {
         routeMap
       }
     );
-  };
+
+    this.fs.copy(
+      this.templatePath('route-info.txt'),
+      this.destinationPath(`route-info.ts`)
+    );
+  }
 
   retrieveRequestParams(method, path) {
     if (!_.includes(['GET', 'DELETE'], method)) {
@@ -153,10 +168,9 @@ module.exports = class extends Generator {
     return arr.reduce((acc, val) => acc + ', ' + val.paramName, '').slice(2);
   }
 
-  isNeedSendData(method) {
+  needSendData(method) {
     return _.includes(['POST', 'PUT'], method);
   }
-
 
   createFileName(name) {
     return _.kebabCase(name);
