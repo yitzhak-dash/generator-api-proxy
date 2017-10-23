@@ -4,8 +4,8 @@ import sys
 import threading
 
 # Get these credentials from http://twilio.com/user/account
-account_sid = "ACe98b950eb8fb9b6e2fad9543e81238db"
-auth_token = "2b443c98ec06daa566b09ce0bbf49841"
+account_sid = "account_sid"
+auth_token = "auth_token"
 client = Client(account_sid, auth_token)
 
 to_numbers = ["+972547804658",
